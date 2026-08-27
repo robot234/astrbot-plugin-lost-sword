@@ -29,6 +29,11 @@ class _AsyncClient:
         return _Response()
 
 
+class _CodeResponse(_Response):
+    url = "https://fanqiebox.com/games/lost-sword/tools/codes/"
+    text = '<html><article class="code-card"><div class="code-meta"><span>有效</span><span>国际服</span></div><strong>ABC123</strong><p>钻石</p></article></html>'
+
+
 def test_cache_prevents_duplicate_request(monkeypatch):
     _AsyncClient.calls = 0
     monkeypatch.setattr(client.httpx, "AsyncClient", _AsyncClient)
@@ -50,3 +55,21 @@ def test_concurrent_same_url_is_deduplicated(monkeypatch):
 
     asyncio.run(run())
     assert _AsyncClient.calls == 1
+
+
+def test_fetch_codes_uses_code_cache(monkeypatch):
+    _AsyncClient.calls = 0
+
+    class CodeClient(_AsyncClient):
+        async def get(self, url):
+            type(self).calls += 1
+            return _CodeResponse()
+
+    monkeypatch.setattr(client.httpx, "AsyncClient", CodeClient)
+    api = client.FanqieboxClient(min_interval=0)
+    url = "https://fanqiebox.com/games/lost-sword/tools/codes/"
+    first = asyncio.run(api.fetch_codes(url))
+    second = asyncio.run(api.fetch_codes(url))
+    assert [item.code for item in first] == ["ABC123"]
+    assert second == first
+    assert CodeClient.calls == 1

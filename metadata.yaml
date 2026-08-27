@@ -1,6 +1,6 @@
 name: astrbot_plugin_lost_sword
 display_name: 失落之剑攻略
-desc: 抓取番茄盒子 Lost Sword 攻略网页并返回文字摘要与攻略图片
-version: v0.1.0
+desc: 抓取番茄盒子 Lost Sword 兑换码与攻略网页
+version: v0.2.0
 author: robot234
 repo: https://github.com/robot234/astrbot-plugin-lost-sword

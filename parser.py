@@ -24,6 +24,17 @@ class Guide:
     images: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class Code:
+    code: str
+    reward: str
+    status: str
+    server: str
+    published: str
+    expires: str
+    source_url: str
+
+
 def validate_guide_url(url: str) -> str:
     """Return a normalized URL or raise ValueError for an unsafe URL."""
     parsed = urlparse(url)
@@ -95,3 +106,46 @@ def parse_page(html: str, url: str) -> Guide:
         paragraphs=tuple(paragraphs),
         images=tuple(images),
     )
+
+
+def parse_codes_page(html: str, url: str) -> tuple[Code, ...]:
+    """Parse Fanqiebox's redemption-code cards in DOM order."""
+    normalized_url = validate_guide_url(url)
+    soup = BeautifulSoup(html, "html.parser")
+    result: list[Code] = []
+    seen: set[str] = set()
+    for card in soup.select("article.code-card"):
+        code_node = card.find("strong")
+        code = _clean(code_node.get_text(" ", strip=True) if code_node else "")
+        if not code or code.casefold() in seen:
+            continue
+        seen.add(code.casefold())
+
+        meta = [_clean(node.get_text(" ", strip=True)) for node in card.select(".code-meta > *")]
+        source = card.select_one(".code-meta a[href]")
+        source_url = ""
+        if source:
+            candidate = urljoin(normalized_url, source.get("href", ""))
+            parsed_source = urlparse(candidate)
+            if parsed_source.scheme in {"http", "https"} and parsed_source.hostname:
+                source_url = candidate.split("#", 1)[0]
+
+        def find_meta(prefix: str) -> str:
+            for item in meta:
+                if item.startswith(prefix):
+                    return item[len(prefix):].strip()
+            return ""
+
+        reward_node = card.find("p")
+        result.append(
+            Code(
+                code=code,
+                reward=_clean(reward_node.get_text(" ", strip=True) if reward_node else "暂无奖励说明"),
+                status=meta[0] if meta else "",
+                server=meta[1] if len(meta) > 1 else "",
+                published=find_meta("发布："),
+                expires=find_meta("截止："),
+                source_url=source_url,
+            )
+        )
+    return tuple(result)

@@ -11,13 +11,14 @@ from astrbot.api.star import Context, Star, register
 
 try:  # AstrBot normally imports the folder as a package.
     from .client import FanqieboxClient
-    from .parser import ALLOWED_HOST, ALLOWED_PATH_PREFIX, validate_guide_url
+    from .parser import ALLOWED_HOST, ALLOWED_PATH_PREFIX, Code, validate_guide_url
 except ImportError:  # Keep direct smoke tests and legacy loaders working.
     from client import FanqieboxClient
-    from parser import ALLOWED_HOST, ALLOWED_PATH_PREFIX, validate_guide_url
+    from parser import ALLOWED_HOST, ALLOWED_PATH_PREFIX, Code, validate_guide_url
 
 
 DEFAULT_URL = "https://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/"
+CODES_URL = "https://fanqiebox.com/games/lost-sword/tools/codes/"
 ALIASES = {
     "埃塞尔城": DEFAULT_URL,
     "ethel": DEFAULT_URL,
@@ -54,6 +55,41 @@ class LostSwordPlugin(Star):
         if slug.startswith("games/lost-sword/"):
             return validate_guide_url("https://" + ALLOWED_HOST + "/" + slug)
         return validate_guide_url(f"https://{ALLOWED_HOST}{ALLOWED_PATH_PREFIX}guides/{slug}/")
+
+    @staticmethod
+    def _code_query(message: str) -> str:
+        return re.sub(r"^\s*/?ls\b", "", message, flags=re.IGNORECASE).strip()
+
+    @filter.command("ls")
+    async def ls(self, event: AstrMessageEvent):
+        """抓取 Lost Sword 兑换码；使用 /ls 或 /ls 兑换码。"""
+        query = self._code_query(event.message_str or "")
+        if query and query.casefold() not in {"兑换码", "code", "codes"}:
+            yield event.plain_result("用法：/ls 兑换码")
+            return
+        try:
+            codes = await self.client.fetch_codes(CODES_URL)
+        except Exception as exc:
+            logger.warning("Lost Sword code fetch failed: %s", exc)
+            yield event.plain_result(f"兑换码抓取失败：{exc}")
+            return
+        if not codes:
+            yield event.plain_result("暂未抓到兑换码，请稍后重试。")
+            return
+        lines = [f"失落之剑兑换码（{len(codes)} 条）", f"来源：{CODES_URL}"]
+        for item in codes:
+            lines.append(f"\n{item.code}")
+            if item.reward:
+                lines.append(f"奖励：{item.reward}")
+            if item.status or item.server:
+                lines.append("状态/区服：" + " · ".join(x for x in (item.status, item.server) if x))
+            if item.published:
+                lines.append(f"发布：{item.published}")
+            if item.expires:
+                lines.append(f"截止：{item.expires}")
+            if item.source_url:
+                lines.append(f"出处：{item.source_url}")
+        yield event.plain_result("\n".join(lines))
 
     @filter.command("lost_sword")
     async def lost_sword(self, event: AstrMessageEvent):

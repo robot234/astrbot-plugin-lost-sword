@@ -1,17 +1,19 @@
 # AstrBot Lost Sword 攻略插件
 
-从[番茄盒子 Lost Sword 攻略](https://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/)抓取页面标题、说明、章节和攻略图片，供 AstrBot 在群聊中查询。
+从[番茄盒子 Lost Sword 兑换码页](https://fanqiebox.com/games/lost-sword/tools/codes/)抓取兑换码、奖励、状态、有效期和出处，供 AstrBot 在群聊中查询；同时保留攻略页查询能力。
 
 ## 使用
 
 ```text
-/lost_sword
+/ls
+/ls 兑换码
+
+# 旧版攻略命令仍可用
 /lost_sword 埃塞尔城
 /lost_sword ethel-city
-/lost_sword https://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/
 ```
 
-插件只允许抓取 `fanqiebox.com/games/lost-sword/` 下的 HTTPS 页面，默认缓存 5 分钟、请求间隔至少 1 秒，并最多返回 3 张攻略图。图片中的阵容文字仍以原图为准，插件不会对图片做 OCR。
+插件只允许抓取 `fanqiebox.com/games/lost-sword/` 下的 HTTPS 页面，默认缓存 5 分钟、请求间隔至少 1 秒。兑换码命令返回页面列出的全部代码及状态，不自行判断日期；攻略命令最多返回 3 张攻略图。图片中的阵容文字仍以原图为准，插件不会对图片做 OCR。
 
 ## 安装
 
