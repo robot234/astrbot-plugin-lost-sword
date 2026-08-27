@@ -76,15 +76,16 @@ def parse_page(html: str, url: str) -> Guide:
         absolute = urljoin(normalized_url, source)
         parsed = urlparse(absolute)
         filename = PurePosixPath(parsed.path).name.lower()
+        try:
+            safe_image_url = validate_guide_url(absolute)
+        except ValueError:
+            continue
         if (
-            parsed.scheme == "https"
-            and parsed.hostname == ALLOWED_HOST
-            and parsed.path.startswith(ALLOWED_PATH_PREFIX)
-            and parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
+            parsed.path.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
             and not filename.startswith("author-")
-            and absolute not in images
+            and safe_image_url not in images
         ):
-            images.append(absolute)
+            images.append(safe_image_url)
 
     return Guide(
         url=normalized_url,
