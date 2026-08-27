@@ -23,7 +23,10 @@ def test_parse_text_and_allowlisted_images():
     [
         "http://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/",
         "https://example.com/games/lost-sword/guides/avalon/ethel-city/",
+        "https://fanqiebox.com:444/games/lost-sword/guides/avalon/ethel-city/",
         "https://fanqiebox.com/api/private",
+        "https://fanqiebox.com/games/lost-sword/../private",
+        "https://fanqiebox.com/games/lost-sword/%2e%2e/private",
         "javascript:alert(1)",
     ],
 )

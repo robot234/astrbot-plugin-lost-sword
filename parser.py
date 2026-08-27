@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from html import unescape
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 from pathlib import PurePosixPath
 
 from bs4 import BeautifulSoup
@@ -29,7 +29,15 @@ def validate_guide_url(url: str) -> str:
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST:
         raise ValueError("只允许抓取 fanqiebox.com 的 HTTPS Lost Sword 页面")
-    if not parsed.path.startswith(ALLOWED_PATH_PREFIX):
+    try:
+        if parsed.port not in (None, 443):
+            raise ValueError("只允许使用 HTTPS 默认端口")
+    except ValueError as exc:
+        raise ValueError("URL 端口无效") from exc
+    decoded_path = unquote(parsed.path)
+    if any(part in {".", ".."} for part in decoded_path.split("/")):
+        raise ValueError("URL 路径不允许目录跳转")
+    if not decoded_path.startswith(ALLOWED_PATH_PREFIX):
         raise ValueError("URL 必须位于 fanqiebox.com/games/lost-sword/ 下")
     return url.split("#", 1)[0]
 

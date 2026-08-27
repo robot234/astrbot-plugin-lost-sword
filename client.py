@@ -42,6 +42,10 @@ class FanqieboxClient:
         }
         # Serialize cache misses and keep a polite minimum interval between requests.
         async with self._request_lock:
+            now = time.monotonic()
+            cached = self._cache.get(url)
+            if cached and cached.expires_at > now:
+                return cached.guide
             wait_for = self.min_interval - (time.monotonic() - self._last_request_at)
             if wait_for > 0:
                 await asyncio.sleep(wait_for)
@@ -53,6 +57,6 @@ class FanqieboxClient:
                 if "html" not in content_type:
                     raise ValueError("目标页面不是 HTML")
                 guide = parse_page(response.text, str(response.url))
+            self._cache[url] = _CacheEntry(expires_at=time.monotonic() + self.cache_ttl, guide=guide)
 
-        self._cache[url] = _CacheEntry(expires_at=now + self.cache_ttl, guide=guide)
         return guide
