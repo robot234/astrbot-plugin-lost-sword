@@ -30,8 +30,8 @@ ALIASES = {
 @register(
     "astrbot_plugin_lost_sword",
     "robot234",
-    "抓取番茄盒子 Lost Sword 攻略网页并返回摘要与攻略图片",
-    "0.1.0",
+    "抓取番茄盒子 Lost Sword 兑换码与攻略网页并返回摘要",
+    "0.2.0",
     repo="https://github.com/robot234/astrbot-plugin-lost-sword",
 )
 class LostSwordPlugin(Star):
