@@ -37,3 +37,16 @@ def test_cache_prevents_duplicate_request(monkeypatch):
     asyncio.run(api.fetch(url))
     asyncio.run(api.fetch(url))
     assert _AsyncClient.calls == 1
+
+
+def test_concurrent_same_url_is_deduplicated(monkeypatch):
+    _AsyncClient.calls = 0
+    monkeypatch.setattr(client.httpx, "AsyncClient", _AsyncClient)
+    api = client.FanqieboxClient(min_interval=0)
+    url = "https://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/"
+
+    async def run():
+        return await asyncio.gather(api.fetch(url), api.fetch(url))
+
+    asyncio.run(run())
+    assert _AsyncClient.calls == 1
