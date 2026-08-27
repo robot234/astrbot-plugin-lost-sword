@@ -11,7 +11,7 @@
 /lost_sword https://fanqiebox.com/games/lost-sword/guides/avalon/ethel-city/
 ```
 
-插件只允许抓取 `fanqiebox.com/games/lost-sword/` 下的 HTTPS 页面，默认缓存 5 分钟并最多返回 3 张攻略图。图片中的阵容文字仍以原图为准，插件不会对图片做 OCR。
+插件只允许抓取 `fanqiebox.com/games/lost-sword/` 下的 HTTPS 页面，默认缓存 5 分钟、请求间隔至少 1 秒，并最多返回 3 张攻略图。图片中的阵容文字仍以原图为准，插件不会对图片做 OCR。
 
 ## 安装
 
