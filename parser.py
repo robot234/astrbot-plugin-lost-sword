@@ -22,6 +22,17 @@ class Guide:
     headings: tuple[str, ...]
     paragraphs: tuple[str, ...]
     images: tuple[str, ...]
+    strategies: tuple["Strategy", ...] = ()
+
+
+@dataclass(frozen=True)
+class Strategy:
+    """A strategy card that pairs explanatory text with one or more images."""
+
+    title: str
+    description: str
+    notes: tuple[str, ...]
+    images: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -98,6 +109,34 @@ def parse_page(html: str, url: str) -> Guide:
         ):
             images.append(safe_image_url)
 
+    strategies: list[Strategy] = []
+    for card in soup.select("article.ls-strategy-sheet"):
+        card_names = {
+            PurePosixPath((node.get("src") or node.get("data-src") or "")).name.lower()
+            for node in card.select("img")
+        }
+        card_images = tuple(
+            image_url
+            for image_url in images
+            if PurePosixPath(urlparse(image_url).path).name.lower() in card_names
+        )
+        if not card_images:
+            continue
+        title_node = card.find("h2") or card.find("h3")
+        title_text = _clean(title_node.get_text(" ", strip=True) if title_node else "")
+        description = ""
+        for node in card.select("p"):
+            if "ls-strategy-hint" not in (node.get("class") or []):
+                description = _clean(node.get_text(" ", strip=True))
+                if description:
+                    break
+        notes: list[str] = []
+        for node in card.select("header b, footer span"):
+            note = _clean(node.get_text(" ", strip=True))
+            if note and note not in notes:
+                notes.append(note)
+        strategies.append(Strategy(title_text, description, tuple(notes), card_images))
+
     return Guide(
         url=normalized_url,
         title=title,
@@ -105,6 +144,7 @@ def parse_page(html: str, url: str) -> Guide:
         headings=tuple(headings),
         paragraphs=tuple(paragraphs),
         images=tuple(images),
+        strategies=tuple(strategies),
     )
 
 

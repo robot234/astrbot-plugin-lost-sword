@@ -6,7 +6,7 @@ import re
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.message_components import Image
+from astrbot.api.message_components import Image, Plain
 from astrbot.api.star import Context, Star, register
 
 try:  # AstrBot normally imports the folder as a package.
@@ -109,17 +109,34 @@ class LostSwordPlugin(Star):
                 logger.warning("Lost Sword guide fetch failed: %s", exc)
                 yield event.plain_result(f"攻略图抓取失败：{exc}")
                 return
+            selected = [
+                strategy
+                for strategy in guide.strategies
+                if any(
+                    image_url.lower().endswith("/" + name)
+                    for image_url in strategy.images
+                    for name in image_names
+                )
+            ]
             images = tuple(
                 image_url
-                for image_url in guide.images
+                for strategy in selected
+                for image_url in strategy.images
                 if any(image_url.lower().endswith("/" + name) for name in image_names)
             )
             if not images:
                 yield event.plain_result("页面暂未找到对应攻略图，请稍后重试。")
                 return
-            yield event.plain_result(f"{guide.title}\n来源：{guide.url}\n攻略图：{len(images)} 张")
-            for image_url in images:
-                yield event.chain_result([Image.fromURL(image_url)])
+            lines = [f"{guide.title}", f"来源：{guide.url}"]
+            for strategy in selected:
+                if strategy.title:
+                    lines.append(f"\n{strategy.title}")
+                if strategy.description:
+                    lines.append(strategy.description)
+                lines.extend(strategy.notes)
+            components = [Plain("\n".join(lines) + f"\n攻略图：{len(images)} 张\n")]
+            components.extend(Image.fromURL(image_url) for image_url in images)
+            yield event.chain_result(components)
             return
         try:
             codes = await self.client.fetch_codes(CODES_URL)
