@@ -21,7 +21,7 @@ def test_parse_text_and_allowlisted_images():
 
 def test_parse_strategy_card_keeps_description_and_notes():
     html = """
-    <main><h1>四类岛屿阵容作业</h1>
+    <main><meta name="description" content="大乱斗攻略摘要"><h1>四类岛屿阵容作业</h1>
       <article class="ls-strategy-sheet ls-brawl-card">
         <header><div><h2>水猫岛</h2><p>站位按图中从左向右排列。</p></div><b>物理减伤 90%</b></header>
         <img src="/games/lost-sword/guides/brawl/water-catfolk-island.png">
@@ -29,6 +29,7 @@ def test_parse_strategy_card_keeps_description_and_notes():
     </main>
     """
     guide = parse_page(html, "https://fanqiebox.com/games/lost-sword/guides/brawl/")
+    assert guide.description == "大乱斗攻略摘要"
     assert guide.strategies[0].title == "水猫岛"
     assert guide.strategies[0].description == "站位按图中从左向右排列。"
     assert guide.strategies[0].notes == ("物理减伤 90%",)

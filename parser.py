@@ -124,18 +124,18 @@ def parse_page(html: str, url: str) -> Guide:
             continue
         title_node = card.find("h2") or card.find("h3")
         title_text = _clean(title_node.get_text(" ", strip=True) if title_node else "")
-        description = ""
+        strategy_description = ""
         for node in card.select("p"):
             if "ls-strategy-hint" not in (node.get("class") or []):
-                description = _clean(node.get_text(" ", strip=True))
-                if description:
+                strategy_description = _clean(node.get_text(" ", strip=True))
+                if strategy_description:
                     break
         notes: list[str] = []
         for node in card.select("header b, footer span"):
             note = _clean(node.get_text(" ", strip=True))
             if note and note not in notes:
                 notes.append(note)
-        strategies.append(Strategy(title_text, description, tuple(notes), card_images))
+        strategies.append(Strategy(title_text, strategy_description, tuple(notes), card_images))
 
     return Guide(
         url=normalized_url,
